@@ -11,6 +11,11 @@ env = gym.make('SpaceInvaders-v0')
 env.render()
 
 
+def wrap_state(state):
+    """It wraps state in a Variable."""
+    return Variable(torch.Tensor(state).view(3, 210, 160)).unsqueeze(0)
+
+
 class DQN(nn.Module):
     """A NN from state to actions."""
     def __init__(self, num_actions):
@@ -47,16 +52,16 @@ def epsilon_greedy(state):
 
 
 # SARSA with eligibility traces
-for episode in range(1, 201):
+for episode in range(0, 100):
     done = False
     G, reward = 0, 0
 
     E = 0.0
-    state1 = Variable(torch.Tensor(env.reset()).view(3, 210, 160)).unsqueeze(0)
+    state1 = wrap_state(env.reset())
     action1, Q1 = epsilon_greedy(state1)
     while done is not True:
         state2, reward, done, info = env.step(action1)
-        state2 = Variable(torch.Tensor(state2).view(3, 210, 160)).unsqueeze(0)
+        state2 = wrap_state(state2)
         action2, Q2 = epsilon_greedy(state2)
 
         Q2.data[0][action2] += reward
@@ -75,5 +80,6 @@ for episode in range(1, 201):
         G += reward
         env.render()
 
-    if episode % 50 == 0:
-        print("Episode {}: Total reward = {}.".format(episode, G))
+    episode_count = episode + 1
+    if episode_count % 10 == 0:
+        print("Episode {}: Total reward = {}.".format(episode_count, G))
