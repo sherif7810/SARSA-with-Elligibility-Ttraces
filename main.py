@@ -18,6 +18,7 @@ def wrap_state(state):
 
 class DQN(nn.Module):
     """A NN from state to actions."""
+
     def __init__(self, num_actions):
         super(DQN, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=8, stride=4)
@@ -34,8 +35,11 @@ class DQN(nn.Module):
         return self.fc5(x)
 
 
-alpha, epsilon, ET_coef = (0.622, 0.9, 0.7)
+epsilon = 0.9
+alpha = 0.622
+ET_coef = torch.Tensor([0.7])
 gamma = torch.Tensor([0.5])
+
 model = DQN(env.action_space.n)
 criterion = nn.L1Loss()
 optimizer = optim.Adam(model.parameters(), lr=alpha)
@@ -56,7 +60,7 @@ for episode in range(0, 100):
     done = False
     G, reward = 0, 0
 
-    E = 0.0
+    E = torch.Tensor([0.0])
     state1 = wrap_state(env.reset())
     action1, Q1 = epsilon_greedy(state1)
     while done is not True:
@@ -68,7 +72,7 @@ for episode in range(0, 100):
         Q2.data = Q2.data.mul(gamma)
         Q1 = Variable(Q1.data)
         loss = criterion(Q2, Q1)
-        E += 1
+        E += torch.Tensor([1])
         loss.data *= E
         optimizer.zero_grad()
         loss.backward()
