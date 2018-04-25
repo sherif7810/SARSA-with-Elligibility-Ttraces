@@ -1,7 +1,6 @@
 import gym
 
 import torch
-from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -12,8 +11,8 @@ env.render()
 
 
 def wrap_state(state):
-    """It wraps state in a Variable."""
-    return Variable(torch.Tensor(state).view(3, 210, 160)).unsqueeze(0)
+    """It wraps state in a Tensor."""
+    return torch.tensor(state).view(3, 210, 160).unsqueeze(0).float()
 
 
 class DQN(nn.Module):
@@ -37,8 +36,8 @@ class DQN(nn.Module):
 
 epsilon = 0.9
 alpha = 0.622
-ET_coef = torch.Tensor([0.7])
-gamma = torch.Tensor([0.5])
+ET_coef = torch.tensor(0.7)
+gamma = torch.tensor(0.5)
 
 model = DQN(env.action_space.n)
 criterion = nn.L1Loss()
@@ -49,9 +48,9 @@ def epsilon_greedy(state):
     action = 0
     Q = model(state)
     if torch.rand(1)[0] > epsilon:
-        action = env.action_space.sample()
+        action = torch.tensor([env.action_space.sample()])
     else:
-        action = Q.data.max(1)[1]
+        action = Q.max(1)[1]
     return (action, Q)
 
 
@@ -60,7 +59,7 @@ for episode in range(0, 100):
     done = False
     G, reward = 0, 0
 
-    E = torch.Tensor([0.0])
+    E = torch.tensor(0.0)
     state1 = wrap_state(env.reset())
     action1, Q1 = epsilon_greedy(state1)
     while done is not True:
@@ -68,12 +67,12 @@ for episode in range(0, 100):
         state2 = wrap_state(state2)
         action2, Q2 = epsilon_greedy(state2)
 
-        Q2.data[0][action2] += reward
-        Q2.data = Q2.data.mul(gamma)
-        Q1 = Variable(Q1.data)
+        Q2[action2.byte()] += reward
+        Q2 = Q2.mul(gamma)
+        Q1 = Q1.detach()
         loss = criterion(Q2, Q1)
-        E += torch.Tensor([1])
-        loss.data *= E
+        E += torch.tensor(1.)
+        loss *= E
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
