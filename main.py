@@ -67,18 +67,17 @@ for episode in range(0, 100):
         state2 = wrap_state(state2)
         action2, Q2 = epsilon_greedy(state2)
 
-        Q2[action2.byte()] += reward
-        Q2 = Q2.mul(gamma)
-        Q1 = Q1.detach()
-        loss = criterion(Q2, Q1)
+        target = reward + gamma * Q2
+        loss = criterion(target, Q1.detach())
         E += torch.tensor(1.)
         loss *= E
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        state1, action1 = state2, action2
         E *= gamma * ET_coef
+
+        state1, action1 = state2, action2
 
         G += reward
         env.render()
