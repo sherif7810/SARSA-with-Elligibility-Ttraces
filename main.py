@@ -48,9 +48,9 @@ def epsilon_greedy(state):
     action = 0
     Q = model(state)
     if torch.rand(1)[0] > epsilon:
-        action = torch.tensor([env.action_space.sample()])
+        action = env.action_space.sample()
     else:
-        action = Q.max(1)[1]
+        action = Q.max(1)[1].item()
     return (action, Q)
 
 
