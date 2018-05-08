@@ -46,12 +46,12 @@ optimizer = optim.Adam(model.parameters(), lr=alpha)
 
 def epsilon_greedy(state):
     action = 0
-    Q = model(state)
-    if torch.rand(1)[0] > epsilon:
-        action = env.action_space.sample()
-    else:
-        action = Q.max(1)[1].item()
-    return (action, Q)
+    with torch.no_grad():
+        if torch.rand(1)[0] > epsilon:
+            action = torch.tensor(env.action_space.sample())
+        else:
+            action = torch.argmax(model(state), 1)
+    return action
 
 
 # SARSA with eligibility traces
@@ -60,14 +60,16 @@ for episode in range(0, 100):
     G, reward = 0, 0
 
     E = torch.tensor(0.0)
-    state1 = wrap_state(env.reset())
-    action1, Q1 = epsilon_greedy(state1)
+    state = wrap_state(env.reset())
+    action = epsilon_greedy(state)
     while done is not True:
-        state2, reward, done, info = env.step(action1)
-        state2 = wrap_state(state2)
-        action2, Q2 = epsilon_greedy(state2)
+        next_state, reward, done, info = env.step(action.item())
+        next_state = wrap_state(next_state)
+        next_action = epsilon_greedy(next_state)
 
+        Q2 = model(next_state)[0, next_action]
         target = reward + gamma * Q2
+        Q1 = model(state)[0, action]
         loss = criterion(target, Q1.detach())
         E += torch.tensor(1.)
         loss *= E
@@ -77,7 +79,7 @@ for episode in range(0, 100):
 
         E *= gamma * ET_coef
 
-        state1, action1 = state2, action2
+        state, action = next_state, next_action
 
         G += reward
         env.render()
