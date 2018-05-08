@@ -70,7 +70,7 @@ for episode in range(0, 100):
         Q2 = model(next_state)[0, next_action]
         target = reward + gamma * Q2
         Q1 = model(state)[0, action]
-        loss = criterion(target, Q1.detach())
+        loss = criterion(Q1, target.detach())
         E += torch.tensor(1.)
         loss *= E
         optimizer.zero_grad()
