@@ -15,17 +15,18 @@ def wrap_state(state):
     return torch.tensor(state).view(3, 210, 160).unsqueeze(0).float()
 
 
-class DQN(nn.Module):
+class DQN(torch.jit.ScriptModule):
     """A NN from state to actions."""
 
     def __init__(self, num_actions):
         super(DQN, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3)
         self.fc4 = nn.Linear(22528, 256)
         self.fc5 = nn.Linear(256, num_actions)
 
+    @torch.jit.script_method
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
